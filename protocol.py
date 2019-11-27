@@ -242,6 +242,9 @@ class SwankProtocol(object):
     def swank_init_inspector(self):
         pass
 
+    def swank_init_presentations(self):
+        pass
+
     def swank_inspect_current_condition(self):
         pass
 
@@ -353,6 +356,9 @@ class SwankProtocol(object):
     def swank_swank_macroexpand_all(self):
         pass
 
+    def swank_swank_require(self, arg):
+        pass
+
     def swank_throw_to_toplevel(self):
         pass
 
@@ -387,4 +393,7 @@ class SwankProtocol(object):
         pass
 
     def swank_operator_arglist(self, a, b):
+        pass
+
+    def swank_autodoc(self, arg1, arg2, arg3):
         pass
