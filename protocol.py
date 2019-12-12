@@ -136,7 +136,9 @@ class SwankProtocol(object):
         ulisp.receive_line()
         while True:
             prefix = ulisp.receive_until_space()
-            if prefix == '> ':
+            if prefix[-2:] == '> ':
+                # check for lines before the prompt
+                result = [x for x in prefix[:-2].split('\r\n') if len(x) > 0][0]
                 logging.debug('Swank eval returns "%s"', result)
                 return result
             result = prefix + ulisp.receive_line()
