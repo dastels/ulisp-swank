@@ -3,15 +3,10 @@ import logging
 import os.path
 import platform
 
-import logconfig
 from lisp import cons, lbool, llist, lstring, read_lisp, symbol, write_lisp
-from ulisp import send_to_ulisp, receive_line_from_ulisp
+import ulisp
 
 __all__ = ['SwankProtocol']
-
-
-logconfig.configure()
-logger = logging.getLogger('ulisp_swank')
 
 
 class SwankProtocol(object):
@@ -51,8 +46,8 @@ class SwankProtocol(object):
         fn = form[0];
         args = form[1:]
         method_name = fn.replace(":", "_").replace("-", "_")
-        logger.debug(method_name)
-        logger.debug(args)
+        logging.debug(method_name)
+        logging.debug(args)
         for i, arg in enumerate(args):
             if hasattr(arg, 'unquote'):
                 args[i] = arg.unquote()
@@ -135,12 +130,16 @@ class SwankProtocol(object):
         string = string.rstrip()
         if not string.endswith(')'):      #a terminating ) will cause evaluation, otherwise we need a newline
             string += '\n'
-        send_to_ulisp(string)             #send the expression
-        receive_line_from_ulisp()              #consume the prompt and echoed input line
-        result = receive_line_from_ulisp()     #get the result
-        receive_line_from_ulisp()              #consume the blank line after the response
-
-        return result
+        logging.debug('Swank eval: %s', string)
+        ulisp.send(string)             #send the expression
+        result = ''
+        ulisp.receive_line()
+        while True:
+            prefix = ulisp.receive_until_space()
+            if prefix == '> ':
+                logging.debug('Swank eval returns "%s"', result)
+                return result
+            result = prefix + ulisp.receive_line()
 
     def swank_interactive_eval(self, string):
         return self.swank_eval(string)

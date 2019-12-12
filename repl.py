@@ -2,25 +2,14 @@
 import logging
 import sys
 
-import logconfig
 from code import InteractiveConsole
-from ulisp import send_to_ulisp, receive_line_from_ulisp, consume_from_ulisp
-
-
-logconfig.configure()
-logger = logging.getLogger(__name__)
+import ulisp
 
 
 class REPL():
 
     def __init__(self, locals=None, prompt=None, stdin=None, stderr=None):
-        """Closely emulate the behavior of the interactive Python interpreter.
-
-        This class builds on InteractiveConsole and ignores sys.ps1
-        and sys.ps2 to use some slime friendly values.
-
-        """
-        self.prompt = prompt or "ULISP> "
+        self.prompt = prompt or 'ULISP> '
         self.stdin = stdin or sys.stdin
         self.stderr = stderr or sys.stderr
 
@@ -28,25 +17,39 @@ class REPL():
         old_ps1 = getattr(sys, 'ps1', '')
         old_ps2 = getattr(sys, 'ps2', '')
         sys.ps1 = self.prompt
-        sys.ps2 = ""
+        sys.ps2 = ''
         stdin, stdout, stderr = (sys.stdin, sys.stdout, sys.stderr)
         sys.stdin, sys.stdout, sys.stderr = (self.stdin, self.stderr, self.stderr)
-        # logger.debug(self.locals)
+        # logging.debug(self.locals)
         # InteractiveConsole.interact(self, banner=banner);
-        logger.info('Entering repl loop')
+        logging.info('Entering repl loop')
         while True:
-            sys.stdout.write(self.prompt)
-            sys.stdout.flush()
-            code = sys.stdin.readline()
-            # self.write('REPL code: %s' % (code))
-            send_to_ulisp(code)
-            receive_line_from_ulisp()
-            response = receive_line_from_ulisp()   # read the result
-            receive_line_from_ulisp()   # consume the empty line
-            # self.write('REPL response: %s' % (response))
-            sys.stdout.write(response)
-            sys.stdout.write("\n")
-            sys.stdout.flush()
+            code = ''
+            while code == '':
+                sys.stdout.write(self.prompt)
+                sys.stdout.flush()
+                code = sys.stdin.readline().strip()
+            logging.debug('REPL code: "%s"', code)
+            ulisp.send(code+'\n')
+            ulisp.receive_line()              # consume the echoed input
+            # read lines and display them until the prompt is read
+            while True:
+                while not ulisp.is_input_waiting():
+                    pass
+                prefix = ulisp.receive_until_space()
+                logging.debug('read prefix: %s', prefix)
+                if prefix[-2:] == '> ':
+                    # check for lines before the prompt
+                    for l in [x for x in prefix[:-2].split('\r\n') if len(x) > 0]:
+                        sys.stdout.write(l)
+                        sys.stdout.write('\n')
+                        sys.stdout.flush()
+                    break
+                rest_of_line = ulisp.receive_line()   # read the rest of the line
+                logging.debug('Read rest of line: %s', rest_of_line)
+                sys.stdout.write(prefix + rest_of_line)
+                sys.stdout.write('\n')
+                sys.stdout.flush()
         sys.stdin, sys.stdout, sys.stderr = (stdin, stdout, stderr)
         sys.ps1 = old_ps1
         sys.ps2 = old_ps2
@@ -68,8 +71,8 @@ class REPL():
 
 def repl(**kwargs):
     shell = REPL(**kwargs)
-    shell.interact("REPL started")
+    shell.interact('REPL started')
 
 
 if __name__ == '__main__':
-    repl(prompt="ULISP> ")
+    repl(prompt='ULISP> ')

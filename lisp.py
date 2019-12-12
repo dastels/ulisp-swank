@@ -2,16 +2,10 @@
 import logging
 import re
 
-import logconfig
-
-
 __all__ = ['BOOL_PATTERN', 'NUMBER_PATTERN', 'cons', 'lbool', 'llist',
            'lstring', 'quoted', 'symbol', 'DOT_OPERATOR', 'LispReader',
            'LispWritter', 'read_lisp', 'write_lisp']
 
-
-logconfig.configure()
-logger = logging.getLogger('ulisp_swank')
 
 BOOL_PATTERN = re.compile(r"^('?t|'?nil)\b")
 NUMBER_PATTERN = re.compile(r"^([0-9]+(\.[0-9]+)?)\b[^.]")
@@ -140,7 +134,7 @@ class LispReader(object):
             else:
                 return self.read_symbol()
         except Exception as e:
-            logger.debug("Parsing failed at: %s", self.remaining_code())
+            logging.debug("Parsing failed at: %s", self.remaining_code())
             raise
 
     def read_bool(self):

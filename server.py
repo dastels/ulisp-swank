@@ -8,7 +8,7 @@ import logconfig
 from lisp import LispReader
 from protocol import SwankProtocol
 from repl import repl
-from ulisp import open_ulisp_port
+import ulisp
 
 try:
     import SocketServer as socketserver
@@ -22,7 +22,6 @@ __all__ = ['HEADER_LENGTH', 'SwankServerRequestHandler',
 
 
 logconfig.configure()
-logger = logging.getLogger(__name__)
 
 HEADER_LENGTH = 6
 PROMPT = "ULISP> "
@@ -51,36 +50,36 @@ class SwankServerRequestHandler(socketserver.BaseRequestHandler):
             self, request, client_address, server)
 
     def handle(self):
-        logger.debug('handle')
+        logging.debug('handle')
         first = True
         while True:
             try:
                 raw = self.request.recv(HEADER_LENGTH)
-                logger.debug('raw()->"%s"', raw)
+                logging.debug('raw()->"%s"', raw)
                 if raw:
                     length = int(raw, 16)
                 else:
-                    logger.error('Empty header received')
+                    logging.error('Empty header received')
                     self.request.close()
                     break;
                 data = self.request.recv(length)
-                logger.debug('recv()->"%s"', data)
+                logging.debug('recv()->"%s"', data)
 
                 if first:
                     ret = self.protocol.indentation_update()
                     ret = ret.encode(self.encoding)
-                    logger.debug('send()->"%s"', ret)
+                    logging.debug('send()->"%s"', ret)
                     self.request.send(ret)
 
                 data = data.decode(self.encoding)
-                logger.debug('dispatching -> %s', data)
+                logging.debug('dispatching -> %s', data)
                 ret = self.protocol.dispatch(data)
-                logger.debug('dispatch -> %s', str(ret))
+                logging.debug('dispatch -> %s', str(ret))
                 ret = ret.encode(self.encoding)
                 self.request.send(ret)
                 first = False
             except socket.timeout as e:
-                logger.error('Socket error %s', str(e))
+                logging.error('Socket error %s', str(e))
                 break
 
 
@@ -93,10 +92,10 @@ class SwankServer(socketserver.TCPServer):
         self.encoding = encoding
         server = socketserver.TCPServer.__init__(self, server_address, handler_class)
         ipaddr, port = self.server_address
-        logger.info('Serving on: {0} ({1})'.format(ipaddr, port))
+        logging.info('Serving on: {0} ({1})'.format(ipaddr, port))
         if port_filename:
             with open(port_filename, 'w') as port_file:
-                logger.debug('Writing port_file {0}'.format(port_filename))
+                logging.debug('Writing port_file {0}'.format(port_filename))
                 port_file.write("{0}".format(port))
 
 
@@ -127,6 +126,7 @@ def swank_process(ipaddr="127.0.0.1", port=0, port_filename=None, encoding="utf-
 
 def main(read_input=False):
     """Main entry point.
+pro
 
     Args: read_input: if True parses the setup using raw_input to
         detect port_file instead of reading commandline arguments.
@@ -138,7 +138,7 @@ def main(read_input=False):
     port_filename = None
     board = "Adafruit Feather M4"
 
-    logger.info("Waiting for setup string...")
+    logging.info("Waiting for setup string...")
     try:
         # At startup slime sends setup code like this as raw input:
         # (progn
@@ -153,10 +153,10 @@ def main(read_input=False):
         if setup:
             port_filename = setup[-1][-1]
     except:
-        logger.exception("Cannot parse setup from stdin. Parsing args...")
+        logging.exception("Cannot parse setup from stdin. Parsing args...")
 
     if port_filename is None:
-        logger.info("No setup string detected, parsing args...")
+        logging.info("No setup string detected, parsing args...")
         try:
             import argparse
             parser = argparse.ArgumentParser()
@@ -182,7 +182,7 @@ def main(read_input=False):
         encoding = args.encoding
         board = args.board
 
-    logger.debug("%s", {
+    logging.debug("%s", {
         'ipaddr': ipaddr,
         'port': port,
         'port_filename': port_filename,
@@ -190,8 +190,8 @@ def main(read_input=False):
         'board': board
     })
 
-    logger.info("Finding ulisp port")
-    open_ulisp_port(board)
+    logging.info("Finding ulisp port")
+    ulisp.open_port(board)
 
     swank_process(ipaddr, int(port), port_filename, encoding)
 
