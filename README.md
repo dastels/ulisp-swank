@@ -27,3 +27,5 @@ For example, this could result in:
 > ['ttyS0', 'USB-Serial Controller', 'Adafruit Feather M4']
 
 Use the appropriate board name in your init.el file (as shown above).
+
+You will also need to make syre _printfreespace_ is not defined as the swank server depends on a simple _>_ prompt.
