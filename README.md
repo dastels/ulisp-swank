@@ -8,11 +8,11 @@ Install slime.
 
 Add to your init.el:
 
-> (setq inferior-lisp-program "python3 <path to server.py> -p 4005 -b <board name>")
+> (setq inferior-lisp-program "python3 path_to-server.py -p 4005 -b board_name")
 
 E.g.;
 
-> (setq inferior-lisp-program "python3 ~/ulisp-swank/server.py -p 4005 -b \"Adafruit Feather M4\"")
+> (setq inferior-lisp-program "python3 ~/ulisp-swank/server.py -p 4005 -b \\"Adafruit Feather M4\\"")
 
 You can find values for the board name by connecting your board and running the
 fiollowing in Python.:
