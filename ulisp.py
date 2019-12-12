@@ -53,6 +53,8 @@ def get_a_char():
         temp = lookahead
         lookahead = None
         return temp
+    while not is_input_waiting():
+        pass
     return ulisp_port.read(1)
 
 
